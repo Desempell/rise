@@ -105,6 +105,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = "api.CustomUser"
+LOGIN_REDIRECT_URL = '/api/profile'
+LOGOUT_REDIRECT_URL = '/api/login'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
