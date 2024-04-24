@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from api.models import CustomUser
+from api.models import CustomUser, Expenses, ExpenseType, Suggestions, SuggestionType
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpRequest
 from django.template import loader
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+
+
 
 def index(request):
     return HttpResponse("Hello, world. You're at the api index.")
@@ -124,3 +126,40 @@ def delete_user(request:HttpRequest):
     else:
         # Return an error response for unsupported request method
         return JsonResponse({"error": "Invalid request method."}, status=405)
+
+@csrf_exempt
+def create_expenses(request:HttpRequest):
+    if request.method == 'POST':
+        # Get the user data from the request
+        userID = request.POST.get('userID')
+        date = request.POST.get('date')
+        amount = request.POST.get('amount')
+        description = request.POST.get('description')
+        type = request.POST.get('typeName')
+        try:
+            user = CustomUser.objects.get(userID=userID)
+            type = ExpenseType.objects.get(name=type)
+            expenses = Expenses.objects.create(user=user, date=date, amount=amount, description=description, type=type)
+        except:
+            return JsonResponse({"error": "ERROR."}, status=405)
+    else:
+        return JsonResponse({"error": "Invalid request method."}, status=405)
+
+@csrf_exempt
+def create_suggestion(request:HttpRequest):
+    if request.method == 'POST':
+        # Get the user data from the request
+        userID = request.POST.get('userID')
+        description = request.POST.get('description')
+        saved_money = request.POST.get('saved_money')
+        suggestion_type = request.POST.get('typeName')
+        try:
+            user = CustomUser.objects.get(userID=userID)
+            suggestion_type = SuggestionType.objects.get(name=suggestion_type)
+            suggestions = Suggestions.objects.create(user=user, saved_money=saved_money, description=description, suggestion_type=suggestion_type)
+        except:
+            return JsonResponse({"error": "ERROR."}, status=405)
+    else:
+        return JsonResponse({"error": "Invalid request method."}, status=405)
+
+
