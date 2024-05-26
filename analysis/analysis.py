@@ -10,10 +10,11 @@ from surprise import Reader
 from functools import cmp_to_key
 
 from flask import Flask, request, jsonify
+import requests
 
 MAX_SPENDING_PER_MONTH = 25000
 
-def generate_alternative_suggestions(expenses):
+def generate_alternative_suggestions(user_id):
     conn = psycopg2.connect(
         dbname='postgres',
         host="localhost",
@@ -22,11 +23,14 @@ def generate_alternative_suggestions(expenses):
         port='5432'
     )
     with conn:
+        user_expenses = pd_sql.read_sql_query('SELECT * FROM expenses WHERE expenses.user_id = %(user_id)s', conn, params={'user_id': user_id})
+        total_expense_sum = 0
+
         # make our own user
         custom_user_table = []
-        for expense in expenses:
-            row = [-1, expense['id'], expense['spending_per_month'] / MAX_SPENDING_PER_MONTH]
-            custom_user_table.append(row)
+        for index, row in user_expenses.iterrows():
+            custom_user_table.append([-1, row['type_id'], row['amount'] / MAX_SPENDING_PER_MONTH])
+            total_expense_sum += row['amount']
 
         sim_options = {
             "name": "cosine",
@@ -57,27 +61,34 @@ def generate_alternative_suggestions(expenses):
         algo.fit(training_set)
 
         suggestions = list()
-        for suggestion_id in range(0, highest_suggestion_id + 1):
+        for suggestion_id in range(1, highest_suggestion_id + 1):
             suggestion = algo.predict(-1, highest_expense_id + suggestion_id)
-            suggestions.append({'id': suggestion_id, 'rating': suggestion.est})
+            suggestion_data = pd_sql.read_sql_query('SELECT * FROM suggestion_type WHERE id = %(id)s', conn, params={'id': suggestion_id}).iloc[0]
+
+            if suggestion_data['price'] <= total_expense_sum:
+                suggestions.append({'id': suggestion_id, 'rating': suggestion.est})
+
+                try:
+                    requests.post('http://127.0.0.1:8000/api/create_suggestion/', json={
+                        'userID': user_id,
+                        'description': '---',
+                        'saved_money': total_expense_sum - suggestion_data['price'],
+                        'rating': round(suggestion.est),
+                        'typeID': suggestion_id
+                    })
+                except:
+                    pass
+
         suggestions = sorted(suggestions, key=cmp_to_key(lambda x, y: y['rating'] - x['rating']))
         return suggestions
 
 if __name__ == '__main__':
-    # test_suggestions = generate_alternative_suggestions([
-    #     {'id': 1, 'spending_per_month': 199}
-    # ])
-    # print(test_suggestions)
-    
     app = Flask(__name__)
 
-    @app.route('/analyze', methods=['POST'])
-    def analyze():
-        expenses = request.json['expenses']
-        if expenses is not None:
-            suggestions = generate_alternative_suggestions(expenses)
-            return jsonify({"message": "Analysis successful", "suggestions": suggestions})
-        return jsonify({"error": "Invalid input data"}), 405
+    @app.route('/analyze/<int:user_id>', methods=['POST'])
+    def analyze(user_id):
+        suggestions = generate_alternative_suggestions(user_id)
+        return jsonify({"message": "Analysis successful", "suggestions": suggestions})
     
     @app.errorhandler(Exception)
     def error_handler(error):
