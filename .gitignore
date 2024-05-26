@@ -10,6 +10,9 @@
 # Ignore virtual environment
 /venv/
 
+# Ignore settings
+/rise/settings.py
+
 # Ignore IDE files
 .vscode/
 .idea/

@@ -21,7 +21,7 @@ class CustomUser(AbstractUser):
         # Specify the table name for the custom user model
         db_table = 'client_user'
 
-class Expenses(models.Model):
+class Expenses(models.Model):   # Затраты
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     date = models.DateField()
     amount = models.FloatField()
@@ -37,11 +37,12 @@ class ExpenseType(models.Model):
     class Meta:
         db_table = 'expense_type'
 
-class Suggestions(models.Model):
+class Suggestions(models.Model):  # Предложения
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     suggestion_type = models.ForeignKey('SuggestionType', on_delete=models.CASCADE)
     saved_money = models.IntegerField()
     description = models.TextField()
+    rating = models.IntegerField()
 
     class Meta:
         db_table = 'suggestions'

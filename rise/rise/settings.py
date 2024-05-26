@@ -77,9 +77,9 @@ WSGI_APPLICATION = 'rise.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
+        'NAME': 'checkDJ',
         'USER': 'postgres',
-        'PASSWORD': 'password',
+        'PASSWORD': 'desempell2',
         'HOST': 'localhost',
         'PORT': '5432',
     }

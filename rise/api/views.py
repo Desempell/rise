@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from api.models import CustomUser, Expenses, ExpenseType, Suggestions, SuggestionType
@@ -17,10 +19,10 @@ def index(request):
 def register_user(request:HttpRequest):
     if request.method == 'POST':
         # Get the user data from the request
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        print(json.loads(request.body))
+        username = json.loads(request.body).get("username")
+        password = json.loads(request.body).get('password')
 
-        # Create a new user object
         user = CustomUser.objects.create_user(username=username, password=password)
 
         # Return the user ID in the response
