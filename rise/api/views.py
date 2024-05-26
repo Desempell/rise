@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
@@ -129,38 +130,125 @@ def delete_user(request:HttpRequest):
         return JsonResponse({"error": "Invalid request method."}, status=405)
 
 @csrf_exempt
-def create_expenses(request:HttpRequest):
+def create_expenses(request: HttpRequest):
     if request.method == 'POST':
-        # Get the user data from the request
-        userID = json.loads(request.body).get('userID')
-        date = json.loads(request.body).get('date')
-        amount = json.loads(request.body).get('amount')
-        description = json.loads(request.body).get('description')
-        type = json.loads(request.body).get('typeName')
         try:
-            user = CustomUser.objects.get(userID=userID)
-            type = ExpenseType.objects.get(name=type)
+            # Parse request body once
+            data = json.loads(request.body)
+
+            # Get the user data from the request
+            userID = data.get('userID')
+            date_str = data.get('date')
+            amount = data.get('amount')
+            description = data.get('description')
+            type_id = data.get('typeID')
+
+            # Convert date string to datetime object
+            date = datetime.strptime(date_str, '%d/%m/%Y').date()
+
+            # Get user and type objects
+            user = CustomUser.objects.get(id=userID)
+            type = ExpenseType.objects.get(id=type_id)
+
+            # Create expense
             expenses = Expenses.objects.create(user=user, date=date, amount=amount, description=description, type=type)
-        except:
-            return JsonResponse({"error": "ERROR."}, status=405)
+
+            return JsonResponse({"Success": f"Created expenses {expenses.id}."}, status=201)
+        except CustomUser.DoesNotExist:
+            return JsonResponse({"error": "User not found."}, status=404)
+        except ExpenseType.DoesNotExist:
+            return JsonResponse({"error": "Expense type not found."}, status=404)
+        except ValueError as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": "An error occurred: " + str(e)}, status=500)
     else:
         return JsonResponse({"error": "Invalid request method."}, status=405)
 
 @csrf_exempt
-def create_suggestion(request:HttpRequest):
+def create_expense_type(request: HttpRequest):
     if request.method == 'POST':
-        # Get the user data from the request
-        userID = request.POST.get('userID')
-        description = request.POST.get('description')
-        saved_money = request.POST.get('saved_money')
-        suggestion_type = request.POST.get('typeName')
         try:
-            user = CustomUser.objects.get(userID=userID)
-            suggestion_type = SuggestionType.objects.get(name=suggestion_type)
-            suggestions = Suggestions.objects.create(user=user, saved_money=saved_money, description=description, suggestion_type=suggestion_type)
-        except:
-            return JsonResponse({"error": "ERROR."}, status=405)
+            # Parse request body
+            data = json.loads(request.body)
+            name = data.get('name')
+
+            if not name:
+                return JsonResponse({"error": "Name field is required."}, status=400)
+
+            # Create ExpenseType
+            expense_type = ExpenseType.objects.create(name=name)
+
+            return JsonResponse({"Success": f"Created expense type {expense_type.id}."}, status=201)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON."}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": "An error occurred: " + str(e)}, status=500)
+    else:
+        return JsonResponse({"error": "Invalid request method."}, status=405)
+
+@csrf_exempt
+def create_suggestion(request: HttpRequest):
+    if request.method == 'POST':
+        try:
+            # Parse request body
+            data = json.loads(request.body)
+
+            # Extract data from request
+            userID = data.get('userID')
+            description = data.get('description')
+            saved_money = data.get('saved_money')
+            rating = data.get('rating')
+            suggestion_type_id = data.get('typeID')
+
+            # Validate required fields
+            if not all([userID, description, saved_money, rating, suggestion_type_id]):
+                return JsonResponse({"error": "All fields are required."}, status=400)
+
+            # Fetch related objects
+            user = CustomUser.objects.get(id=userID)
+            suggestion_type = SuggestionType.objects.get(id=suggestion_type_id)
+
+            # Create suggestion
+            suggestion = Suggestions.objects.create(
+                user=user,
+                saved_money=saved_money,
+                description=description,
+                suggestion_type=suggestion_type,
+                rating=rating
+            )
+
+            return JsonResponse({"Success": f"Created suggestion {suggestion.id}."}, status=201)
+        except CustomUser.DoesNotExist:
+            return JsonResponse({"error": "User not found."}, status=404)
+        except SuggestionType.DoesNotExist:
+            return JsonResponse({"error": "Suggestion type not found."}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON."}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
     else:
         return JsonResponse({"error": "Invalid request method."}, status=405)
 
 
+@csrf_exempt
+def create_suggestion_type(request: HttpRequest):
+    if request.method == 'POST':
+        try:
+            # Parse request body
+            data = json.loads(request.body)
+            name = data.get('name')
+
+            if not name:
+                return JsonResponse({"error": "Name field is required."}, status=400)
+
+            # Create SuggestionType
+            suggestion_type = SuggestionType.objects.create(name=name)
+
+            return JsonResponse({"Success": f"Created suggestion type {suggestion_type.id}."}, status=201)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON."}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": "An error occurred: " + str(e)}, status=500)
+    else:
+        return JsonResponse({"error": "Invalid request method."}, status=405)
