@@ -230,6 +230,31 @@ def create_suggestion(request: HttpRequest):
     else:
         return JsonResponse({"error": "Invalid request method."}, status=405)
 
+@csrf_exempt
+def get_suggestion_by_user_id(request, user_id):
+    if request.method == 'GET':
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            suggestion = Suggestions.objects.filter(user=user).first()
+
+            if suggestion:
+                return JsonResponse({
+                    "user_id": suggestion.user_id,
+                    "suggestion_type": suggestion.suggestion_type.name,
+                    "saved_money": suggestion.saved_money,
+                    "description": suggestion.description,
+                    "rating": suggestion.rating
+                }, status=200)
+            else:
+                return JsonResponse({"error": "No suggestion found for the user."}, status=404)
+
+        except CustomUser.DoesNotExist:
+            # Если пользователь с указанным идентификатором не найден
+            return JsonResponse({"error": "User not found."}, status=404)
+
+    else:
+        # Если метод запроса не является GET
+        return JsonResponse({"error": "Invalid request method."}, status=405)
 
 @csrf_exempt
 def create_suggestion_type(request: HttpRequest):
