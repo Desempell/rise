@@ -32,3 +32,7 @@ secret_key.txt
 
 # Ignore local settings file
 local_settings.py
+
+/rise/rise/settings.py
+/rise/settings.py
+settings.py
