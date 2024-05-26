@@ -1,4 +1,6 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
+
 from . import views
 
 urlpatterns = [
@@ -9,5 +11,5 @@ urlpatterns = [
     path("logout/", views.logout_user, name="logout_user"),
     path("delete_user/", views.delete_user, name="delete_user"),
     path("create_expenses/", views.create_expenses, name="create_expenses"),
-    path("create_suggestions/", views.create_suggestion, name="create_suggestions"),
+    path("create_suggestions/", views.delete_user, name="create_expenses"),
 ]
