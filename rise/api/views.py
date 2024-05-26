@@ -63,7 +63,7 @@ def login_user(request:HttpRequest):
 def get_user(request:HttpRequest):
     if request.method == 'POST':
         # Get the user data from the request
-        username = request.POST.get('username')
+        username = json.loads(request.body).get('username')
 
         try:
             # Find matching user
@@ -108,12 +108,12 @@ def logout_user(request:HttpRequest):
 def delete_user(request:HttpRequest):
     if request.method == 'POST':
         # Get the user data from the request
-        username = request.POST.get('username')
+        username = json.loads(request.body).get('username')
 
         try:
             # Find matching user
             user = CustomUser.objects.get(username=username)
-            password = request.POST.get('password')
+            password = json.loads(request.body).get('password')
 
             # Delete if passwords match
             if user.check_password(password):
@@ -132,11 +132,11 @@ def delete_user(request:HttpRequest):
 def create_expenses(request:HttpRequest):
     if request.method == 'POST':
         # Get the user data from the request
-        userID = request.POST.get('userID')
-        date = request.POST.get('date')
-        amount = request.POST.get('amount')
-        description = request.POST.get('description')
-        type = request.POST.get('typeName')
+        userID = json.loads(request.body).get('userID')
+        date = json.loads(request.body).get('date')
+        amount = json.loads(request.body).get('amount')
+        description = json.loads(request.body).get('description')
+        type = json.loads(request.body).get('typeName')
         try:
             user = CustomUser.objects.get(userID=userID)
             type = ExpenseType.objects.get(name=type)
