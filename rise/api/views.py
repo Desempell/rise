@@ -19,7 +19,6 @@ def index(request):
 def register_user(request:HttpRequest):
     if request.method == 'POST':
         # Get the user data from the request
-        print(json.loads(request.body))
         username = json.loads(request.body).get("username")
         password = json.loads(request.body).get('password')
 
@@ -40,12 +39,12 @@ def login_user(request:HttpRequest):
             return JsonResponse({"error": "Cannot log into multiple users"}, status=403)
 
         # Get the user data from the request
-        username = request.POST.get('username')
+        username = json.loads(request.body).get('username')
 
         try:
             # Find matching user
             user = CustomUser.objects.get(username=username)
-            password = request.POST.get('password')
+            password = json.loads(request.body).get('password')
 
             # Login if passwords match
             if user.check_password(password):
