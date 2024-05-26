@@ -263,12 +263,15 @@ def create_suggestion_type(request: HttpRequest):
             # Parse request body
             data = json.loads(request.body)
             name = data.get('name')
+            price = data.get('price')
 
             if not name:
                 return JsonResponse({"error": "Name field is required."}, status=400)
+            if not price:
+                price = 0
 
             # Create SuggestionType
-            suggestion_type = SuggestionType.objects.create(name=name)
+            suggestion_type = SuggestionType.objects.create(name=name, price=price)
 
             return JsonResponse({"Success": f"Created suggestion type {suggestion_type.id}."}, status=201)
         except json.JSONDecodeError:

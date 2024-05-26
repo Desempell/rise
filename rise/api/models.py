@@ -49,6 +49,7 @@ class Suggestions(models.Model):  # Предложения
 
 class SuggestionType(models.Model):
     name = models.CharField(max_length=255)
+    price = models.IntegerField()
 
     class Meta:
         db_table = 'suggestion_type'
