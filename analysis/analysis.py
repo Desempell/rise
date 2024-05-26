@@ -1,4 +1,7 @@
 import pandas as pd
+import pandas.io.sql as pd_sql
+import psycopg2
+from psycopg2._psycopg import connection
 
 from surprise import KNNWithMeans
 from surprise import Dataset
@@ -11,53 +14,54 @@ from flask import Flask, request, jsonify
 MAX_SPENDING_PER_MONTH = 25000
 
 def generate_alternative_suggestions(expenses):
-    custom_user_table = []
-    for expense in expenses:
-        row = [-1, expense['id'], expense['spending_per_month'] / MAX_SPENDING_PER_MONTH]
-        custom_user_table.append(row)
+    conn = psycopg2.connect(
+        dbname='postgres',
+        host="localhost",
+        user='postgres',
+        password='admin',
+        port='5432'
+    )
+    with conn:
+        # make our own user
+        custom_user_table = []
+        for expense in expenses:
+            row = [-1, expense['id'], expense['spending_per_month'] / MAX_SPENDING_PER_MONTH]
+            custom_user_table.append(row)
 
-    sim_options = {
-        "name": "cosine",
-        "user_based": False,
-    }
-    algo = KNNWithMeans(sim_options=sim_options)
+        sim_options = {
+            "name": "cosine",
+            "user_based": False,
+        }
+        algo = KNNWithMeans(sim_options=sim_options)
 
-    # ID затрат:
-    # 1 - сигареты
-    # 2 - алкоголь
-    # 3 - вредная еда
-    df = pd.read_csv('users_and_expenses.csv')
-    df['spending_per_month'] = df['spending_per_month'].apply(lambda x: x / MAX_SPENDING_PER_MONTH)
-    df.rename(columns={'spending_per_month': 'rating'}, inplace=True)
-    highest_expense_id = df['item'].max()
+        # read expenses from db and turn spending amounts into ratings
+        df = pd_sql.read_sql_query('SELECT user_id as user, type_id as item, amount as spending_per_month FROM expenses', conn)
+        df['spending_per_month'] = df['spending_per_month'].apply(lambda x: x / MAX_SPENDING_PER_MONTH)
+        df.rename(columns={'spending_per_month': 'rating'}, inplace=True)
+        highest_expense_id = df['item'].max()
 
-    # ID предложений:
-    # 1 - билет в кино
-    # 2 - книга, фэнтези
-    # 3 - книга, детектив
-    # 4 - абонемент в спортзал
-    # 5 - чай
-    df2 = pd.read_csv('users_and_suggestions.csv')
-    highest_suggestion_id = df2['item'].max()
-    df2['item'] = df2['item'].add(highest_expense_id)
-    df = pd.concat(objs=[df, df2], ignore_index=True)
+        # read suggestions from db
+        df2 = pd_sql.read_sql_query('SELECT user_id as user, suggestion_type_id as item, rating as rating FROM suggestions', conn)
+        highest_suggestion_id = df2['item'].max()
+        df2['item'] = df2['item'].add(highest_expense_id)
+        df = pd.concat(objs=[df, df2], ignore_index=True)
 
-    df_custom_user = pd.DataFrame(custom_user_table, columns=['user', 'item', 'rating'])
-    df = pd.concat([df, df_custom_user], ignore_index=True)
+        df_custom_user = pd.DataFrame(custom_user_table, columns=['user', 'item', 'rating'])
+        df = pd.concat([df, df_custom_user], ignore_index=True)
 
-    reader = Reader(rating_scale=(1, 5))
-    data = Dataset.load_from_df(df[['user', 'item', 'rating']], reader)
+        reader = Reader(rating_scale=(1, 5))
+        data = Dataset.load_from_df(df[['user', 'item', 'rating']], reader)
 
-    training_set = data.build_full_trainset()
+        training_set = data.build_full_trainset()
 
-    algo.fit(training_set)
+        algo.fit(training_set)
 
-    suggestions = list()
-    for suggestion_id in range(1, highest_suggestion_id + 1):
-        suggestion = algo.predict(-1, highest_expense_id + suggestion_id)
-        suggestions.append({'id': suggestion_id, 'rating': suggestion.est})
-    suggestions = sorted(suggestions, key=cmp_to_key(lambda x, y: y['rating'] - x['rating']))
-    return suggestions
+        suggestions = list()
+        for suggestion_id in range(0, highest_suggestion_id + 1):
+            suggestion = algo.predict(-1, highest_expense_id + suggestion_id)
+            suggestions.append({'id': suggestion_id, 'rating': suggestion.est})
+        suggestions = sorted(suggestions, key=cmp_to_key(lambda x, y: y['rating'] - x['rating']))
+        return suggestions
 
 if __name__ == '__main__':
     # test_suggestions = generate_alternative_suggestions([
@@ -80,4 +84,3 @@ if __name__ == '__main__':
         return jsonify({"error": error.description}), error.code
     
     app.run(port="7005")
-
