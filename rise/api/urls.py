@@ -14,5 +14,7 @@ urlpatterns = [
     path("create_suggestion/", views.create_suggestion, name="create_suggestion"),
     path('create-expense-type/', views.create_expense_type, name='create-expense-type'),
     path('create-suggestion-type/', views.create_suggestion_type, name='create-suggestion-type'),
-    path('suggestion/<int:user_id>/', views.get_suggestion_by_user_id, name='get_suggestion_by_user_id')
+    path('suggestion/<int:user_id>/', views.get_suggestions_by_user_id, name='get_suggestions_by_user_id'),
+    path('get_expense_types/', views.get_expense_types, name='get_expense_types')
+
 ]

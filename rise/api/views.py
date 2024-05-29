@@ -187,6 +187,25 @@ def create_expense_type(request: HttpRequest):
     else:
         return JsonResponse({"error": "Invalid request method."}, status=405)
 
+
+@csrf_exempt
+def get_expense_types(request):
+    if request.method == 'GET':
+        try:
+            expense_types = ExpenseType.objects.all()
+            expense_types_list = [
+                {
+                    "id": expense_type.id,
+                    "name": expense_type.name
+                } for expense_type in expense_types
+            ]
+            return JsonResponse(expense_types_list, safe=False, status=200)
+        except Exception as e:
+            return JsonResponse({"error": "An error occurred: " + str(e)}, status=500)
+    else:
+        return JsonResponse({"error": "Invalid request method."}, status=405)
+
+
 @csrf_exempt
 def create_suggestion(request: HttpRequest):
     if request.method == 'POST':
@@ -230,31 +249,34 @@ def create_suggestion(request: HttpRequest):
     else:
         return JsonResponse({"error": "Invalid request method."}, status=405)
 
+
 @csrf_exempt
-def get_suggestion_by_user_id(request, user_id):
+def get_suggestions_by_user_id(request, user_id):
     if request.method == 'GET':
         try:
             user = CustomUser.objects.get(id=user_id)
-            suggestion = Suggestions.objects.filter(user=user).first()
+            suggestions = Suggestions.objects.filter(user=user)
 
-            if suggestion:
-                return JsonResponse({
-                    "user_id": suggestion.user_id,
-                    "suggestion_type": suggestion.suggestion_type.name,
-                    "saved_money": suggestion.saved_money,
-                    "description": suggestion.description,
-                    "rating": suggestion.rating
-                }, status=200)
+            if suggestions.exists():
+                suggestions_list = [
+                    {
+                        "user_id": suggestion.user_id,
+                        "suggestion_type": suggestion.suggestion_type.name,
+                        "saved_money": suggestion.saved_money,
+                        "description": suggestion.description,
+                        "rating": suggestion.rating
+                    } for suggestion in suggestions
+                ]
+                return JsonResponse(suggestions_list, safe=False, status=200)
             else:
-                return JsonResponse({"error": "No suggestion found for the user."}, status=404)
+                return JsonResponse({"error": "No suggestions found for the user."}, status=404)
 
         except CustomUser.DoesNotExist:
-            # Если пользователь с указанным идентификатором не найден
             return JsonResponse({"error": "User not found."}, status=404)
 
     else:
-        # Если метод запроса не является GET
         return JsonResponse({"error": "Invalid request method."}, status=405)
+
 
 @csrf_exempt
 def create_suggestion_type(request: HttpRequest):
