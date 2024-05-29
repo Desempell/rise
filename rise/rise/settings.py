@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'rise.urls'
@@ -77,13 +78,44 @@ WSGI_APPLICATION = 'rise.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'checkDJ',
+        'NAME': 'rise',
         'USER': 'postgres',
-        'PASSWORD': 'mas',
+        'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
+
+CORS_ORIGIN_ALLOW_ALL = True  # For development purposes, this will allow all domains. In production, specify allowed origins.
+# Alternatively, you can specify allowed origins as below:
+# CORS_ORIGIN_WHITELIST = [
+#    'http://localhost:3000',
+#    'http://127.0.0.1:8000',
+#    ...
+# ]
+
+# To allow specific HTTP methods:
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# To allow specific headers:
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 
 # Password validation
