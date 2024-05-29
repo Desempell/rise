@@ -10,6 +10,7 @@ from django.template import loader
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth import authenticate, login, logout
+from django.middleware.csrf import get_token
 
 def index(request):
     return HttpResponse("Hello, world. You're at the api index.")
@@ -35,7 +36,9 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return JsonResponse({"message": "Login successful"})
+            response = JsonResponse({"message": "Login successful"})
+            response['X-CSRFToken'] = get_token(request)  # Include CSRF token in response
+            return response
         return JsonResponse({"error": "Username or password not matching"}, status=406)
     return JsonResponse({"error": "Invalid request method."}, status=405)
 
@@ -52,7 +55,6 @@ def check_auth_status(request):
         return JsonResponse({"isAuthenticated": True, "username": request.user.username})
     return JsonResponse({"isAuthenticated": False})
 
-@csrf_exempt
 def get_user(request:HttpRequest):
     if request.method == 'POST':
         # Get the user data from the request
@@ -82,7 +84,7 @@ def get_user(request:HttpRequest):
         # Return an error response for unsupported request method
         return JsonResponse({"error": "Invalid request method."}, status=405)
 
-@csrf_exempt
+
 def logout_user(request:HttpRequest):
     if request.method == 'POST':
         session_user_id = request.session.get('user_id')

@@ -33,23 +33,23 @@ ALLOWED_HOSTS = ["*"]
 INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'django.contrib.admin',
+    'corsheaders',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'rise.urls'
@@ -87,25 +87,13 @@ DATABASES = {
     }
 }
 
+CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True  # For development purposes, this will allow all domains. In production, specify allowed origins.
 # Alternatively, you can specify allowed origins as below:
-# CORS_ORIGIN_WHITELIST = [
-#    'http://localhost:3000',
-#    'http://127.0.0.1:8000',
-#    ...
-# ]
-
 # To allow specific HTTP methods:
-CORS_ALLOW_METHODS = [
-    '*',
-]
 
-# To allow specific headers:
-CORS_ALLOW_HEADERS = [
-    '*',
-]
-
-
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
