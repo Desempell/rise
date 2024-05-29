@@ -45,8 +45,10 @@ def login_user(request):
 @csrf_exempt
 def logout_user(request):
     if request.method == 'POST':
-        logout(request)
-        return JsonResponse({"message": "Logout successful"})
+        if request.user.is_authenticated:
+            logout(request)
+            return JsonResponse({"message": "Logout successful"})
+        return JsonResponse({"error": "User not logged in"}, status=401)
     return JsonResponse({"error": "Invalid request method."}, status=405)
 
 @csrf_exempt
@@ -80,21 +82,6 @@ def get_user(request:HttpRequest):
         except CustomUser.DoesNotExist:
             # Return an error response for a user that does not exist
             return JsonResponse({"error": "User does not exist"}, status=404)
-    else:
-        # Return an error response for unsupported request method
-        return JsonResponse({"error": "Invalid request method."}, status=405)
-
-
-def logout_user(request:HttpRequest):
-    if request.method == 'POST':
-        session_user_id = request.session.get('user_id')
-        if session_user_id is not None:
-            # Log out if logged in
-            request.session['user_id'] = None
-            return JsonResponse({"message": "Logout successful"})
-        else:
-            # Return an error response for user that is not logged in yet
-            return JsonResponse({"error": "User not logged in"}, status=401)
     else:
         # Return an error response for unsupported request method
         return JsonResponse({"error": "Invalid request method."}, status=405)

@@ -87,6 +87,13 @@ DATABASES = {
     }
 }
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:9000',  # Add this line
+    'http://localhost:9000',  # Add this line if necessary
+]
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True  # For development purposes, this will allow all domains. In production, specify allowed origins.
 # Alternatively, you can specify allowed origins as below:
