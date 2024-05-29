@@ -36,7 +36,7 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            response = JsonResponse({"message": "Login successful"})
+            response = JsonResponse({"message": "Login successful", "user_id": user.id, "token": "123456"})
             response['X-CSRFToken'] = get_token(request)  # Include CSRF token in response
             return response
         return JsonResponse({"error": "Username or password not matching"}, status=406)
