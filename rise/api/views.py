@@ -9,56 +9,48 @@ from django.http import JsonResponse, HttpRequest
 from django.template import loader
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-
-
+from django.contrib.auth import authenticate, login, logout
 
 def index(request):
     return HttpResponse("Hello, world. You're at the api index.")
 
-# Auth
 @csrf_exempt
-def register_user(request:HttpRequest):
+def register_user(request):
     if request.method == 'POST':
-        # Get the user data from the request
-        username = json.loads(request.body).get("username")
-        password = json.loads(request.body).get('password')
+        data = json.loads(request.body)
+        username = data.get("username")
+        password = data.get('password')
 
         user = CustomUser.objects.create_user(username=username, password=password)
-
-        # Return the user ID in the response
         return JsonResponse({"message": "User registered successfully", "user_id": user.id})
-    else:
-        # Return an error response for unsupported request method
-        return JsonResponse({"error": "Invalid request method."}, status=405)
+    return JsonResponse({"error": "Invalid request method."}, status=405)
 
 @csrf_exempt
-def login_user(request:HttpRequest):
+def login_user(request):
     if request.method == 'POST':
-        # Check if user is not logged in yet
-        session_user_id = request.session.get('user_id')
-        if session_user_id is not None:
-            return JsonResponse({"error": "Cannot log into multiple users"}, status=403)
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
 
-        # Get the user data from the request
-        username = json.loads(request.body).get('username')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return JsonResponse({"message": "Login successful"})
+        return JsonResponse({"error": "Username or password not matching"}, status=406)
+    return JsonResponse({"error": "Invalid request method."}, status=405)
 
-        try:
-            # Find matching user
-            user = CustomUser.objects.get(username=username)
-            password = json.loads(request.body).get('password')
+@csrf_exempt
+def logout_user(request):
+    if request.method == 'POST':
+        logout(request)
+        return JsonResponse({"message": "Logout successful"})
+    return JsonResponse({"error": "Invalid request method."}, status=405)
 
-            # Login if passwords match
-            if user.check_password(password):
-                request.session['user_id'] = user.id
-                return JsonResponse({"message": "Login successful"})
-            else:
-                return JsonResponse({"error": "Username or password not matching"}, status=406)
-        except CustomUser.DoesNotExist:
-            # Return an error response for a user that does not exist
-            return JsonResponse({"error": "User does not exist"}, status=404)
-    else:
-        # Return an error response for unsupported request method
-        return JsonResponse({"error": "Invalid request method."}, status=405)
+@csrf_exempt
+def check_auth_status(request):
+    if request.user.is_authenticated:
+        return JsonResponse({"isAuthenticated": True, "username": request.user.username})
+    return JsonResponse({"isAuthenticated": False})
 
 @csrf_exempt
 def get_user(request:HttpRequest):
