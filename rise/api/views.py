@@ -125,7 +125,7 @@ def create_expenses(request: HttpRequest):
             type_id = data.get('typeID')
 
             # Convert date string to datetime object
-            date = datetime.strptime(date_str, '%d/%m/%Y').date()
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
 
             # Get user and type objects
             user = CustomUser.objects.get(id=userID)
@@ -208,6 +208,12 @@ def create_suggestion(request: HttpRequest):
             # Fetch related objects
             user = CustomUser.objects.get(id=userID)
             suggestion_type = SuggestionType.objects.get(id=suggestion_type_id)
+
+            # Delete existing suggestion
+            exist_suggestions = Suggestions.objects.filter(user=user, suggestion_type=suggestion_type)
+            if exist_suggestions.exists():
+                for suggestion in exist_suggestions:
+                    suggestion.delete()
 
             # Create suggestion
             suggestion = Suggestions.objects.create(

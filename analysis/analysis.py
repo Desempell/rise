@@ -9,7 +9,7 @@ from surprise import Reader
 
 from functools import cmp_to_key
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 import requests
 
 MAX_SPENDING_PER_MONTH = 25000
@@ -85,10 +85,19 @@ def generate_alternative_suggestions(user_id):
 if __name__ == '__main__':
     app = Flask(__name__)
 
-    @app.route('/analyze/<int:user_id>', methods=['POST'])
+    @app.route('/analyze/<int:user_id>', methods=['POST', 'OPTIONS'])
     def analyze(user_id):
+        if request.method == 'OPTIONS':
+            response = make_response()
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            response.headers.add('Access-Control-Allow-Headers', "*")
+            response.headers.add('Access-Control-Allow-Methods', "*")
+            return response
+        
         suggestions = generate_alternative_suggestions(user_id)
-        return jsonify({"message": "Analysis successful", "suggestions": suggestions})
+        response = jsonify({"message": "Analysis successful", "suggestions": suggestions})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
     
     @app.errorhandler(Exception)
     def error_handler(error):
