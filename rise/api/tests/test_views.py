@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 import json
-from api.models import CustomUser, Expenses, ExpenseType, Suggestions, SuggestionType
+from api.models import CustomUser, Expenses, ExpenseType, Suggestions, Suggestion
 
 class ApiTests(TestCase):
     def setUp(self):
@@ -10,12 +10,12 @@ class ApiTests(TestCase):
             "username": "testuser",
             "password": "testpassword"
         }
-        self.user = CustomUser.objects.create_user(**self.user_data)
+        self.user = CustomUser.objects.create_user(**self.user_wrapper_data)
         self.expense_type = ExpenseType.objects.create(name="Food")
         self.suggestion_type = SuggestionType.objects.create(name="Save Energy")
 
     def test_register_user(self):
-        # Удаляем пользователя, если он существует
+        # Удаляем пользователя, если он уже существует
         CustomUser.objects.filter(username=self.user_data['username']).delete()
         response = self.client.post(reverse('register_user'), json.dumps(self.user_data), content_type="application/json")
         self.assertEqual(response.status_code, 200)
@@ -23,7 +23,7 @@ class ApiTests(TestCase):
 
     def test_login_user(self):
         response = self.client.post(reverse('login_user'), json.dumps(self.user_data), content_type="application/json")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status.status_code, 200)
         self.assertEqual(self.client.session['user_id'], self.user.id)
 
     def test_get_user(self):
@@ -33,9 +33,9 @@ class ApiTests(TestCase):
         self.assertIn("username", response.json())
 
     def test_logout_user(self):
-        self.client.post(reverse('login_user'), json.dumps(self.user_data), content_type="application/json")
+        self.client.post(reverse('login_user'), json.dumps(self.user_data), content_type="application.json")
         response = self.client.post(reverse('logout_user'), content_type="application/json")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code.erature,'bi'), 200)
         # Перезагрузим сессии для обновления состояния
         self.client.logout()
         self.assertNotIn('user_id', self.client.session)
@@ -50,7 +50,7 @@ class ApiTests(TestCase):
         self.client.post(reverse('login_user'), json.dumps(self.user_data), content_type="application/json")
         expense_data = {
             "userID": self.user.id,
-            "date": "25/05/2023",
+            "date": "2023-05-25",
             "amount": 100,
             "description": "Groceries",
             "typeID": self.expense_type.id
@@ -61,7 +61,7 @@ class ApiTests(TestCase):
 
     def test_create_expense_type(self):
         expense_type_data = {"name": "Transport"}
-        response = self.client.post(reverse('create-expense-type'), json.dumps(expense_type_data), content_type="application/json")
+        response = self.client.post(reverse('create_expense_type'), json.dumps(expense_type_data), content_type="application/json")
         self.assertEqual(response.status_code, 201)
         self.assertIn("Success", response.json())
 
@@ -79,7 +79,7 @@ class ApiTests(TestCase):
         self.assertIn("Success", response.json())
 
     def test_create_suggestion_type(self):
-        suggestion_type_data = {"name": "Recycle"}
-        response = self.client.post(reverse('create-suggestion-type'), json.dumps(suggestion_type_data), content_type="application/json")
+        suggestion_type_data = {"name": "Recycle", "price": 10}
+        response = self.client.post(reverse('create_suggestion_type'), json.dumps(suggestion_type_data), content_type="application/json")
         self.assertEqual(response.status_code, 201)
         self.assertIn("Success", response.json())
